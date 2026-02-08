@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/constants.dart';
 import '../../config/routes.dart';
@@ -58,6 +59,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) setState(() => _isRefreshing = false);
   }
 
+  Future<void> _launchBugReport() async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'support@fuelpricetracker.com',
+      query: 'subject=Bug Report - TankVenn',
+    );
+
+    if (await canLaunchUrl(emailUri)) {
+      await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open email client')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
@@ -88,8 +107,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(user.displayName,
-                              style: Theme.of(context).textTheme.titleMedium),
+                          Text(
+                            user.displayName,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                           Text(
                             userProvider.accountTypeLabel,
                             style: Theme.of(context).textTheme.bodySmall,
@@ -157,10 +178,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   )
                 : const Icon(Icons.refresh),
             title: const Text('Refresh Stations'),
-            subtitle:
-                const Text('Fetch nearby fuel stations from OpenStreetMap'),
+            subtitle: const Text(
+              'Fetch nearby fuel stations from OpenStreetMap',
+            ),
             enabled: !_isRefreshing,
             onTap: _refreshStations,
+          ),
+
+          const Divider(),
+
+          // Bug report
+          ListTile(
+            leading: const Icon(Icons.bug_report),
+            title: const Text('Report a Bug'),
+            subtitle: const Text('Send feedback or report issues'),
+            onTap: _launchBugReport,
           ),
 
           const Divider(),
@@ -177,7 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 applicationVersion: '1.0.0',
                 children: [
                   const Text(
-                    'Community-driven fuel price tracker for Norway. '
+                    'TankVenn - Community-driven fuel price tracker for Norway. '
                     'Report and find the cheapest fuel prices near you.',
                   ),
                 ],
