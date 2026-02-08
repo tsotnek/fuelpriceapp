@@ -1,4 +1,4 @@
-# Fuel Price Tracker
+# Fuel price tracker
 
 A Flutter application to track and compare fuel prices in real-time. This app allows users to find nearby fuel stations, view current prices, and contribute by reporting new prices.
 
