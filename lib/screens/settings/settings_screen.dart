@@ -31,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final lat = position?.latitude ?? AppConstants.defaultMapCenter.latitude;
     final lng = position?.longitude ?? AppConstants.defaultMapCenter.longitude;
 
+    stationProvider.setUserLocation(lat, lng);
     await stationProvider.fetchNearbyStations(lat, lng);
 
     if (mounted) {

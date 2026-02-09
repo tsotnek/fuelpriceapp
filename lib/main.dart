@@ -17,8 +17,10 @@ void main() async {
     persistenceEnabled: false,
   );
 
+  // Don't block the UI on auth — UserProvider has sensible defaults
+  // (Anonymous user) so the app can render immediately.
   final userProvider = UserProvider();
-  await userProvider.initialize();
+  userProvider.initialize();
 
   runApp(
     MultiProvider(

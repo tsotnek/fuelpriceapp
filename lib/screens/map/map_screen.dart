@@ -31,10 +31,7 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Subscribe to Firestore streams (will be empty on first launch
-      // until we fetch stations after getting the user's position).
-      context.read<StationProvider>().loadStations();
-      // Kick off location — station fetch is triggered in build()
+      // Kick off location — station loading is triggered in build()
       // once position is available.
       context.read<LocationProvider>().fetchLocation();
     });
@@ -67,24 +64,32 @@ class _MapScreenState extends State<MapScreen> {
       });
     }
 
-    // Fetch nearby stations once we know the user's position,
-    // or fall back to Oslo if location failed.
+    // Once we know the user's position (or location failed), set the
+    // location on StationProvider, subscribe to Firestore, and fetch
+    // nearby stations from Overpass.
     if (!_hasTriggeredStationFetch) {
       if (locationProvider.hasLocation) {
         _hasTriggeredStationFetch = true;
         final pos = locationProvider.position!;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          context
-              .read<StationProvider>()
-              .fetchNearbyStations(pos.latitude, pos.longitude);
+          final sp = context.read<StationProvider>();
+          sp.setUserLocation(pos.latitude, pos.longitude);
+          sp.loadStations();
+          sp.fetchNearbyStations(pos.latitude, pos.longitude);
         });
       } else if (locationProvider.error != null) {
         _hasTriggeredStationFetch = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<StationProvider>().fetchNearbyStations(
-                AppConstants.defaultMapCenter.latitude,
-                AppConstants.defaultMapCenter.longitude,
-              );
+          final sp = context.read<StationProvider>();
+          sp.setUserLocation(
+            AppConstants.defaultMapCenter.latitude,
+            AppConstants.defaultMapCenter.longitude,
+          );
+          sp.loadStations();
+          sp.fetchNearbyStations(
+            AppConstants.defaultMapCenter.latitude,
+            AppConstants.defaultMapCenter.longitude,
+          );
         });
       }
     }

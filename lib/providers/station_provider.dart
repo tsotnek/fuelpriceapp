@@ -20,6 +20,9 @@ class StationProvider extends ChangeNotifier {
   Set<String> _selectedBrands = {};
   bool _isLoading = false;
 
+  double? _userLat;
+  double? _userLng;
+
   StreamSubscription? _stationsSub;
   StreamSubscription? _pricesSub;
 
@@ -29,18 +32,40 @@ class StationProvider extends ChangeNotifier {
   SortMode get sortMode => _sortMode;
   Set<String> get selectedBrands => _selectedBrands;
   bool get isLoading => _isLoading;
+  bool get hasUserLocation => _userLat != null && _userLng != null;
+
+  /// Set the user's location for distance-based filtering.
+  void setUserLocation(double lat, double lng) {
+    _userLat = lat;
+    _userLng = lng;
+    notifyListeners();
+  }
 
   /// Sorted list of unique brand names from loaded stations.
   List<String> get availableBrands {
-    final brands = _stations.map((s) => s.brand).where((b) => b.isNotEmpty).toSet().toList();
+    final brands = filteredStations.map((s) => s.brand).where((b) => b.isNotEmpty).toSet().toList();
     brands.sort();
     return brands;
   }
 
-  /// Stations filtered by selected brands (empty selection = show all).
+  /// Stations filtered by distance (20 km radius) and selected brands.
+  /// Returns nothing until user location is set.
   List<Station> get filteredStations {
-    if (_selectedBrands.isEmpty) return _stations;
-    return _stations.where((s) => _selectedBrands.contains(s.brand)).toList();
+    // Don't show any stations until we know the user's position.
+    if (_userLat == null || _userLng == null) return [];
+
+    var result = _stations.where((s) {
+      final d = DistanceService.distanceInMeters(
+        _userLat!, _userLng!, s.latitude, s.longitude,
+      );
+      return d <= AppConstants.defaultSearchRadiusMeters;
+    });
+
+    if (_selectedBrands.isNotEmpty) {
+      result = result.where((s) => _selectedBrands.contains(s.brand));
+    }
+
+    return result.toList();
   }
 
   void toggleBrand(String brand) {
