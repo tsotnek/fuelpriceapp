@@ -35,9 +35,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await stationProvider.fetchNearbyStations(lat, lng);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Stations refreshed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Stations refreshed')));
       setState(() => _isRefreshing = false);
     }
   }
@@ -159,6 +159,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Found an issue? Let us know'),
             onTap: () {
               Navigator.pushNamed(context, AppRoutes.bugReport);
+            },
+          ),
+
+          const Divider(),
+
+          // Product idea
+          ListTile(
+            leading: const Icon(Icons.lightbulb_outline),
+            title: const Text('Suggest an Idea'),
+            subtitle: const Text('Have a feature request or improvement?'),
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.productIdea);
             },
           ),
 
