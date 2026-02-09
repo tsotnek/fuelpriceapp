@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../config/constants.dart';
 import '../models/current_price.dart';
 import '../models/fuel_type.dart';
 import '../models/station.dart';
 import '../services/distance_service.dart';
 import '../services/firestore_service.dart';
+import '../services/overpass_service.dart';
 
 enum SortMode { cheapest, nearest }
 
@@ -74,6 +76,27 @@ class StationProvider extends ChangeNotifier {
       _prices = prices;
       notifyListeners();
     });
+  }
+
+  /// Fetch stations from Overpass near [lat],[lng] and upsert into Firestore.
+  /// The Firestore stream subscription (from [loadStations]) will
+  /// automatically pick up the new data.
+  Future<void> fetchNearbyStations(double lat, double lng) async {
+    try {
+      final stations = await OverpassService.fetchNearbyStations(
+        lat: lat,
+        lng: lng,
+        radiusMeters: AppConstants.defaultSearchRadiusMeters,
+      );
+      if (stations.isNotEmpty) {
+        await FirestoreService.upsertStations(stations);
+      } else {
+        await FirestoreService.seedIfEmpty();
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch nearby stations: $e');
+      await FirestoreService.seedIfEmpty();
+    }
   }
 
   void setFuelType(FuelType type) {

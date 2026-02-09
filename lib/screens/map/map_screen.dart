@@ -25,15 +25,17 @@ class _MapScreenState extends State<MapScreen> {
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
   bool _hasCenteredOnUser = false;
+  bool _hasTriggeredStationFetch = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final stationProvider = context.read<StationProvider>();
-      if (stationProvider.stations.isEmpty) {
-        stationProvider.loadStations();
-      }
+      // Subscribe to Firestore streams (will be empty on first launch
+      // until we fetch stations after getting the user's position).
+      context.read<StationProvider>().loadStations();
+      // Kick off location — station fetch is triggered in build()
+      // once position is available.
       context.read<LocationProvider>().fetchLocation();
     });
   }
@@ -63,6 +65,28 @@ class _MapScreenState extends State<MapScreen> {
         final pos = locationProvider.position!;
         _mapController.move(LatLng(pos.latitude, pos.longitude), 13);
       });
+    }
+
+    // Fetch nearby stations once we know the user's position,
+    // or fall back to Oslo if location failed.
+    if (!_hasTriggeredStationFetch) {
+      if (locationProvider.hasLocation) {
+        _hasTriggeredStationFetch = true;
+        final pos = locationProvider.position!;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context
+              .read<StationProvider>()
+              .fetchNearbyStations(pos.latitude, pos.longitude);
+        });
+      } else if (locationProvider.error != null) {
+        _hasTriggeredStationFetch = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.read<StationProvider>().fetchNearbyStations(
+                AppConstants.defaultMapCenter.latitude,
+                AppConstants.defaultMapCenter.longitude,
+              );
+        });
+      }
     }
 
     final filtered = stationProvider.filteredStations;
@@ -158,9 +182,13 @@ class _MapScreenState extends State<MapScreen> {
                 bottom: bottomOffset,
                 child: FloatingActionButton.small(
                   heroTag: 'locateMe',
-                  onPressed: locationProvider.hasLocation
-                      ? _centerOnUser
-                      : null,
+                  onPressed: locationProvider.isLoading
+                      ? null
+                      : locationProvider.hasLocation
+                          ? _centerOnUser
+                          : () => context
+                              .read<LocationProvider>()
+                              .fetchLocation(),
                   child: locationProvider.isLoading
                       ? const SizedBox(
                           width: 18,
