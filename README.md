@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logos/Logo.png" alt="TankVenn Logo" width="200"/>
+</p>
+
 # TankVenn
 
 A Flutter application to track and compare fuel prices in real-time. This app allows users to find nearby fuel stations, view current prices, and contribute by reporting new prices.
