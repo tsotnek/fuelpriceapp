@@ -63,3 +63,55 @@ jobs:
           name: Release ${{ inputs.version }} (${{ inputs.build_number }})
           files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
+
+  update-suggestions:
+    name: Update Workflow Suggestions
+    needs: build
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Latest Tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          
+          # Extract version and build (format: v1.0.4+1)
+          if [[ $LATEST_TAG == *"+"* ]]; then
+            VERSION=$(echo $LATEST_TAG | cut -d'+' -f1 | sed 's/v//')
+            BUILD=$(echo $LATEST_TAG | cut -d'+' -f2)
+          else
+            VERSION=$(echo $LATEST_TAG | sed 's/v//')
+            BUILD=0
+          fi
+          
+          # Increment build number
+          NEXT_BUILD=$((BUILD + 1))
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "next_build=$NEXT_BUILD" >> $GITHUB_OUTPUT
+
+      - name: Update Workflow Defaults
+        run: |
+          VERSION=${{ steps.get_tag.outputs.version }}
+          NEXT_BUILD=${{ steps.get_tag.outputs.next_build }}
+          
+          echo "Updating defaults to Version: $VERSION, Build: $NEXT_BUILD"
+          
+          # Update release.yml using yq
+          yq -i ".on.workflow_dispatch.inputs.version.default = \"$VERSION\"" .github/workflows/release.yml
+          yq -i ".on.workflow_dispatch.inputs.build_number.default = \"$NEXT_BUILD\"" .github/workflows/release.yml
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/release.yml
+          git commit -m "chore: update release workflow suggestions to v${{ steps.get_tag.outputs.version }}+${{ steps.get_tag.outputs.next_build }}" || echo "No changes to commit"
+          git push
