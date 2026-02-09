@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import '../../config/constants.dart';
 import '../../config/routes.dart';
 import '../../providers/location_provider.dart';
-import '../../providers/station_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../services/firestore_service.dart';
+import '../../services/overpass_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,8 +22,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isRefreshing = true);
 
     final locationProvider = context.read<LocationProvider>();
-    final stationProvider = context.read<StationProvider>();
-
     if (!locationProvider.hasLocation) {
       await locationProvider.fetchLocation();
     }
@@ -31,15 +30,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final lat = position?.latitude ?? AppConstants.defaultMapCenter.latitude;
     final lng = position?.longitude ?? AppConstants.defaultMapCenter.longitude;
 
-    stationProvider.setUserLocation(lat, lng);
-    await stationProvider.fetchNearbyStations(lat, lng);
+    final stations = await OverpassService.fetchNearbyStations(
+      lat: lat,
+      lng: lng,
+      radiusMeters: AppConstants.defaultSearchRadiusMeters,
+    );
 
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Stations refreshed')));
-      setState(() => _isRefreshing = false);
+    if (!mounted) return;
+
+    if (stations.isNotEmpty) {
+      await FirestoreService.upsertStations(stations);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Updated ${stations.length} stations')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not fetch stations. Check your internet connection.',
+          ),
+        ),
+      );
     }
+
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   @override
@@ -159,18 +175,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Found an issue? Let us know'),
             onTap: () {
               Navigator.pushNamed(context, AppRoutes.bugReport);
-            },
-          ),
-
-          const Divider(),
-
-          // Product idea
-          ListTile(
-            leading: const Icon(Icons.lightbulb_outline),
-            title: const Text('Suggest an Idea'),
-            subtitle: const Text('Have a feature request or improvement?'),
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.productIdea);
             },
           ),
 

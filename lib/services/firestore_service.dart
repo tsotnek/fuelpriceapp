@@ -5,7 +5,6 @@ import '../models/current_price.dart';
 import '../models/fuel_type.dart';
 import '../models/price_history_point.dart';
 import '../models/price_report.dart';
-import '../models/product_idea.dart';
 import '../models/station.dart';
 import '../models/user_profile.dart';
 import 'mock_data_service.dart';
@@ -277,13 +276,6 @@ class FirestoreService {
   /// Submit a bug report to the bug_reports collection.
   static Future<void> submitBugReport(BugReport report) async {
     await _db.collection('bug_reports').add(report.toMap());
-  }
-
-  // ── Product Ideas ────────────────────────────────────────────────────
-
-  /// Submit a product idea to the product_ideas collection.
-  static Future<void> submitProductIdea(ProductIdea idea) async {
-    await _db.collection('product_ideas').add(idea.toMap());
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────
