@@ -26,7 +26,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAqMn_WiFFsSNNXKCJqf1vKX2rJQnqJaYE',
+    apiKey: 'AIzaSyBWDccWEArtb_hmGSPRSB1tr6ssh6G5M28',
     appId: '1:574053615024:android:6f97c12579939bf4aac275',
     messagingSenderId: '574053615024',
     projectId: 'norskfuelpriceapp-firebase',
@@ -34,7 +34,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAqMn_WiFFsSNNXKCJqf1vKX2rJQnqJaYE',
+    apiKey: 'AIzaSyCOeBMEipFYvMCSdc7029YL_WuhGTZS82Q',
     appId: '1:574053615024:android:6f97c12579939bf4aac275',
     messagingSenderId: '574053615024',
     projectId: 'norskfuelpriceapp-firebase',
@@ -43,7 +43,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAqMn_WiFFsSNNXKCJqf1vKX2rJQnqJaYE',
+    apiKey: 'AIzaSyAGH35GlseUOkNTia_2nAZvTiQfBWeSVvs',
     appId: '1:574053615024:android:6f97c12579939bf4aac275',
     messagingSenderId: '574053615024',
     projectId: 'norskfuelpriceapp-firebase',

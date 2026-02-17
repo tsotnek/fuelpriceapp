@@ -51,6 +51,9 @@ app.*.map.json
 android/key.properties
 *.jks
 
+# Firebase config (created from secrets in CI)
+android/app/google-services.json
+
 # venv
 venv/
 
